@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/examples-and-tests/examples-and-tests.iml" filepath="$PROJECT_DIR$/examples-and-tests/examples-and-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/hello-maven-plugin.iml" filepath="$PROJECT_DIR$/hello-maven-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examples-and-tests/simple-boot/simple-boot.iml" filepath="$PROJECT_DIR$/examples-and-tests/simple-boot/simple-boot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/windows-service-wrapper-maven/windows-service-wrapper.iml" filepath="$PROJECT_DIR$/windows-service-wrapper-maven/windows-service-wrapper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examples-and-tests/windows-service-wrapper-method-testing/windows-service-wrapper-method-testing.iml" filepath="$PROJECT_DIR$/examples-and-tests/windows-service-wrapper-method-testing/windows-service-wrapper-method-testing.iml" />
+    </modules>
+  </component>
+</project>
