@@ -20,7 +20,6 @@
     <name>simple-boot</name>
     <description>Bare minimum executable spring boot jar to use for testing executable.</description>
 
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

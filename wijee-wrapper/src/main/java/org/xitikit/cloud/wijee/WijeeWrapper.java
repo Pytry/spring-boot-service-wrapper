@@ -31,12 +31,27 @@ public class WijeeWrapper{
      *
      * @param resourceName ie.: "/SmartLibrary.dll"
      */
-    public void exportResource(String resourceName, Path target){
+    private void exportResource(String resourceName, String directory){
 
-        try(InputStream stream = WijeeWrapper.class.getResourceAsStream(resourceName)){
+        try(InputStream stream =
+                this.getClass()
+                    .getClassLoader()
+                    .getResourceAsStream(resourceName)){
 
             if(stream == null){
                 throw new WijeeException("Cannot get resource \"" + resourceName + "\" from Jar file because the input stream was null.");
+            }
+
+            Path resourcePath = Paths.get(resourceName);
+            Path fileName = resourcePath.getFileName();
+            String targetFileName = fileName.toString();
+            Path directoryName = Paths.get("target", directory);
+            if(Files.notExists(directoryName)){
+                Files.createDirectory(directoryName);
+            }
+            Path target = Paths.get("target", directory, targetFileName);
+            if(Files.exists(target)){
+                Files.delete(target);
             }
             Files.copy(stream, target);
         }
@@ -49,7 +64,13 @@ public class WijeeWrapper{
 
     public void wrap(){
 
-        exportResource(ClasspathResources.COMMONS_DAEMON_JAR, Paths.get("target/"+name));
+        exportResource(ClasspathResources.COMMONS_DAEMON_JAR, name);
+        exportResource(ClasspathResources.COMMONS_DAEMON_NATIVE_SOURCES, name);
+        exportResource(ClasspathResources.COMMONS_SERVICE_32, name);
+        exportResource(ClasspathResources.COMMONS_SERVICE_64, name + "/x64");
+        exportResource(ClasspathResources.COMMONS_SERVICE_MANAGER, name);
+        exportResource(ClasspathResources.TOMCAT_NATIVE_DLL_32, name);
+        exportResource(ClasspathResources.TOMCAT_NATIVE_DLL_64, name + "/x64");
     }
 
     public String getJarPath(){
