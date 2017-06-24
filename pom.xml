@@ -4,56 +4,63 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <base-apache.loc.1>http://www.apache.org/dyn/closer.lua?action=download&amp;filename=</base-apache.loc.1>
-        <base-apache.loc.2>http://archive.apache.org/dist</base-apache.loc.2>
-        <base-commons.loc.1>${base-apache.loc.1}/commons</base-commons.loc.1>
-        <base-commons.loc.2>${base-apache.loc.2}/commons</base-commons.loc.2>
-        <base-tomcat.loc.1>${base-apache.loc.1}/tomcat</base-tomcat.loc.1>
-        <base-tomcat.loc.2>${base-apache.loc.2}/tomcat</base-tomcat.loc.2>
-        <commons-daemon.version>1.0.15-bin-windows-signed</commons-daemon.version>
-        <tomcat.native.version>1.2.12-win32</tomcat.native.version>
     </properties>
 
-    <groupId>org.xitikit.cloud</groupId>
-    <artifactId>windows-service-wrapper-parent</artifactId>
+    <groupId>org.xitikit.cloud.wijee</groupId>
+    <artifactId>windows-installable-java-enhanced-executable-wrapper</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <name>${project.artifactId}</name>
     <packaging>pom</packaging>
     <url>${scm.url}</url>
 
+    <description>
+        Projects for easily running java executables as a service in windows.
+        The name is really long and doesn't make much sense because I really
+        really wanted the acronym to sound like "Ouija".
+    </description>
+
     <modules>
         <!--The order is important here, since we need some kind of executable jar for integration testing.-->
-        <module>windows-service-wrapper-maven</module>
+        <module>wijee-wrapper</module>
+        <module>wijee-wrapper-maven</module>
         <module>examples-and-tests</module>
     </modules>
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.plugin-tools</groupId>
-            <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+
+    <licenses>
+        <license>
+            <name>Xitikit.org</name>
+            <comments>Copyright Xitikit.org 2017</comments>
+            <distribution>repo,manual</distribution>
+            <url>https://github.com/Pytry/windows-installable-java-enhanced-executable-wrapper/blob/master/LICENSE.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/Pytry/windows-installable-java-enhanced-executable-wrapper.git</connection>
+        <developerConnection>scm:git:https://github.com/Pytry/windows-installable-java-enhanced-executable-wrapper.git</developerConnection>
+        <url>https://github.com/Pytry/windows-installable-java-enhanced-executable-wrapper.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>J. Keith Hoopes</name>
+            <email>keith.hoopes@xitikit.org</email>
+            <organization>Xitikit</organization>
+            <organizationUrl>https://github.com/Pytry?tab=repositories</organizationUrl>
+            <roles>
+                <role>Senior Business Applications Development Analysis Securing Specialist</role>
+                <role>owner</role>
+                <role>ceo</role>
+            </roles>
+        </developer>
+    </developers>
+
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
-            </plugin>
+            <!--Lifecycle Management-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -64,6 +71,65 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <inherited>true</inherited>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <inherited>true</inherited>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.2</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <createChecksum>true</createChecksum>
+                </configuration>
+            </plugin>
+            <!--Reporting and Documentation-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.7</version>
+                <inherited>true</inherited>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
+                <inherited>true</inherited>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-webdav-jackrabbit</artifactId>
+                        <version>2.12</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <!-- Code Quality-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.2</version>
+                <inherited>false</inherited>
+                <configuration>
+                    <rulesUri>${project.baseUri}/versions-rules.xml</rulesUri>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
 </project>

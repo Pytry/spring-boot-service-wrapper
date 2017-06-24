@@ -7,21 +7,18 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="simple-boot" />
-        <module name="windows-service-wrapper-method-testing" />
-      </profile>
-      <profile name="Annotation profile for windows-service-wrapper-parent" enabled="true">
-        <sourceOutputDir name="../target/generated-sources/annotations" />
-        <sourceTestOutputDir name="../target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="windows-service-wrapper" />
+        <module name="wijee-method-testing" />
+        <module name="wijee-wrapper" />
+        <module name="wijee-wrapper-maven" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="examples-and-tests" target="1.8" />
-      <module name="hello-maven-plugin" target="1.8" />
-      <module name="simple-boot" target="1.5" />
-      <module name="windows-service-wrapper" target="1.8" />
-      <module name="windows-service-wrapper-method-testing" target="1.8" />
+      <module name="simple-boot" target="1.8" />
+      <module name="wijee-method-testing" target="1.8" />
+      <module name="wijee-wrapper" target="1.8" />
+      <module name="wijee-wrapper-maven" target="1.8" />
+      <module name="windows-installable-java-enhanced-executable-wrapper" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

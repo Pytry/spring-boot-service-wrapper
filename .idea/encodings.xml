@@ -4,7 +4,8 @@
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/examples-and-tests" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/examples-and-tests/simple-boot" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/examples-and-tests/windows-service-wrapper-method-testing" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/windows-service-wrapper-maven" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/examples-and-tests/wijee-method-testing" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/wijee-wrapper" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/wijee-wrapper-maven" charset="UTF-8" />
   </component>
 </project>

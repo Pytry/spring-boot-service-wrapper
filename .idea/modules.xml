@@ -3,10 +3,11 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/examples-and-tests/examples-and-tests.iml" filepath="$PROJECT_DIR$/examples-and-tests/examples-and-tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/hello-maven-plugin.iml" filepath="$PROJECT_DIR$/hello-maven-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/examples-and-tests/simple-boot/simple-boot.iml" filepath="$PROJECT_DIR$/examples-and-tests/simple-boot/simple-boot.iml" />
-      <module fileurl="file://$PROJECT_DIR$/windows-service-wrapper-maven/windows-service-wrapper.iml" filepath="$PROJECT_DIR$/windows-service-wrapper-maven/windows-service-wrapper.iml" />
-      <module fileurl="file://$PROJECT_DIR$/examples-and-tests/windows-service-wrapper-method-testing/windows-service-wrapper-method-testing.iml" filepath="$PROJECT_DIR$/examples-and-tests/windows-service-wrapper-method-testing/windows-service-wrapper-method-testing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examples-and-tests/wijee-method-testing/wijee-method-testing.iml" filepath="$PROJECT_DIR$/examples-and-tests/wijee-method-testing/wijee-method-testing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wijee-wrapper/wijee-wrapper.iml" filepath="$PROJECT_DIR$/wijee-wrapper/wijee-wrapper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wijee-wrapper-maven/wijee-wrapper-maven.iml" filepath="$PROJECT_DIR$/wijee-wrapper-maven/wijee-wrapper-maven.iml" />
+      <module fileurl="file://$PROJECT_DIR$/windows-installable-java-enhanced-executable-wrapper.iml" filepath="$PROJECT_DIR$/windows-installable-java-enhanced-executable-wrapper.iml" />
     </modules>
   </component>
 </project>
