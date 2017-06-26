@@ -1,10 +1,9 @@
 package org.xitikit.cloud.wijee;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.*;
+import java.nio.file.*;
+
+import static java.nio.file.StandardCopyOption.*;
 
 /**
  * Copyright Xitikit.org ${year}
@@ -31,7 +30,7 @@ public class WijeeWrapper{
      *
      * @param resourceName ie.: "/SmartLibrary.dll"
      */
-    private void exportResource(String resourceName, String directory){
+    private void exportClasspathResource(String resourceName, String directory){
 
         try(InputStream stream =
                 this.getClass()
@@ -62,15 +61,77 @@ public class WijeeWrapper{
         }
     }
 
+
+
+    /**
+     * Copy a file from the specified path to the target build directory that will be used
+     * package the executable.
+     */
+    private void copyFile(Path source, Path destination){
+
+        assert source != null : "The 'source' parameter cannot be 'null' in method 'private void copyFile(File fromFile, File toDirectory)'";
+        assert destination != null : "The 'destination' parameter cannot be 'null' in method 'private void copyFile(File fromFile, File toDirectory)'";
+
+        try{
+
+            File from = source.toFile();
+            if(!from.exists()){
+                throw new FileNotFoundException("Could not find the file indicated by the path '"+source.toString()+"'.");
+            }
+            File to = destination.toFile();
+
+            if(!to.exists()){
+                Files.createFile(destination);
+            }
+            if(from.isDirectory()){
+
+                Files.walk(source, FileVisitOption.FOLLOW_LINKS).forEach(
+                    p -> {
+                        try{
+                            Files.copy(p,
+                                to.isDirectory() ? destination.resolve(p) : destination,
+                                REPLACE_EXISTING, COPY_ATTRIBUTES);
+                        }
+                        catch(IOException e){
+                            e.printStackTrace();
+                            throw new WijeeException(e.getMessage(), e);
+                        }
+                    }
+                );
+            }
+            else{
+                Files.copy(source,
+                    to.isDirectory() ? destination.resolve(source) : destination,
+                    REPLACE_EXISTING, COPY_ATTRIBUTES);
+            }
+        }
+        catch(IOException e){
+
+            e.printStackTrace();
+            throw new WijeeIOException("Error reading file '" + source.toString() + "'. " + e.getMessage(), e);
+        }
+    }
+
     public void wrap(){
 
-        exportResource(ClasspathResources.COMMONS_DAEMON_JAR, name);
-        exportResource(ClasspathResources.COMMONS_DAEMON_NATIVE_SOURCES, name);
-        exportResource(ClasspathResources.COMMONS_SERVICE_32, name);
-        exportResource(ClasspathResources.COMMONS_SERVICE_64, name + "/x64");
-        exportResource(ClasspathResources.COMMONS_SERVICE_MANAGER, name);
-        exportResource(ClasspathResources.TOMCAT_NATIVE_DLL_32, name);
-        exportResource(ClasspathResources.TOMCAT_NATIVE_DLL_64, name + "/x64");
+        exportClasspathResource(ClasspathResources.COMMONS_DAEMON_JAR, name);
+        exportClasspathResource(ClasspathResources.COMMONS_DAEMON_NATIVE_SOURCES, name);
+        exportClasspathResource(ClasspathResources.COMMONS_SERVICE_32, name);
+        exportClasspathResource(ClasspathResources.COMMONS_SERVICE_64, name + "/x64");
+        exportClasspathResource(ClasspathResources.COMMONS_SERVICE_MANAGER, name);
+        exportClasspathResource(ClasspathResources.TOMCAT_NATIVE_DLL_32, name);
+        exportClasspathResource(ClasspathResources.TOMCAT_NATIVE_DLL_64, name + "/x64");
+
+        copyJar();
+    }
+
+    private void copyJar(){
+
+        copyFile(Paths.get(jarPath), Paths.get(name));
+    }
+
+    private void copyScripts(){
+
     }
 
     public String getJarPath(){

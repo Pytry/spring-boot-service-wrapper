@@ -11,7 +11,7 @@ package org.xitikit.cloud.wijee;
 public final class ClasspathResources{
 
     private static final String
-        apacheHome = "apache",
+        apacheHome = "native-libraries\\apache",
         commonsDaemonVersion = "1.0.15",
         commonsDaemonHome = apacheHome + "\\commons-daemon-" + commonsDaemonVersion,
         tomcatNativeVersion = "1.2.12",
