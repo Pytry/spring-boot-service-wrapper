@@ -1,9 +1,26 @@
 package org.xitikit.cloud.wijee;
 
-import java.io.*;
-import java.nio.file.*;
+import org.apache.commons.io.IOUtils;
 
-import static java.nio.file.StandardCopyOption.*;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static java.nio.file.Files.*;
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.attribute.FileTime.fromMillis;
+import static org.xitikit.cloud.wijee.ClasspathResources.*;
+import static org.xitikit.cloud.wijee.ReplacementPairBuilder.ReplacementPair;
+import static org.xitikit.cloud.wijee.ReplacementPairBuilder.start;
 
 /**
  * Copyright Xitikit.org ${year}
@@ -12,60 +29,107 @@ import static java.nio.file.StandardCopyOption.*;
  */
 public class WijeeWrapper{
 
-    private final String
-        jarPath,
-        name;
+    private static final Logger log = Logger.getLogger(WijeeWrapper.class.getName());
 
-    private WijeeWrapper(final String jarPath, final String name){
+    private static final String
+        wijee_classpath_token = "${WIJEE_CLASSPATH}",
+        wijee_main_class = "${WIJEE_MAIN_CLASS}",
+        wijee_app_name = "${WIJEE_APP_NAME}";
 
-        assert jarPath != null && !"".equals(jarPath.trim());
-        assert name != null && !"".equals(name.trim());
+    private final WijeeConfiguration config;
+    private final ReplacementPair[] replacementPairs;
 
-        this.jarPath = jarPath;
-        this.name = name;
+    public WijeeWrapper(final WijeeConfiguration config){
+
+        Objects.requireNonNull(config);
+
+        this.config = config;
+        replacementPairs = start()
+            .add(wijee_classpath_token, config.getClasspath())
+            .add(wijee_main_class, config.getStartClass())
+            .add(wijee_app_name, config.getAppName())
+            .finish();
+    }
+
+    @SuppressWarnings("unused")
+    public void wrap(){
+
+        final String applicationName = config.getAppName();
+        if("".equals(applicationName)){
+            throw new WijeeException("Either the jar-name, war-name, or app-name must be set.");
+        }
+        exportClasspathResource(applicationName + "/x64", COMMONS_SERVICE_64);
+        exportClasspathResources(applicationName,
+            COMMONS_DAEMON_JAR,
+            COMMONS_DAEMON_NATIVE_SOURCES,
+            COMMONS_SERVICE_32,
+            COMMONS_SERVICE_MANAGER);
+        exportScriptResources(applicationName);
+        copyArtifact(applicationName);
+        packageApplication(applicationName);
+    }
+
+    private void exportClasspathResources(final String directory, final String... resources){
+
+        exportClasspathResources(new ReplacementPair[0], directory, resources);
     }
 
     /**
-     * Export a packaged resource to the "target" build directory.
-     *
-     * @param resourceName ie.: "/SmartLibrary.dll"
+     * Export the packaged resources to the "target" build directory.
      */
-    private void exportClasspathResource(String resourceName, String directory){
+    private void exportClasspathResources(final ReplacementPair[] replacementPairs, final String directory, final String... resources){
 
-        try(InputStream stream =
-                this.getClass()
-                    .getClassLoader()
-                    .getResourceAsStream(resourceName)){
+        assert directory != null : "Missing 'final String directory' in 'private void exportClasspathResource(final String directory, final String resourceName)'. 'directory' can be an empty string to indicate a relative root path.";
+
+        Arrays.stream(resources)
+            .forEach(r -> exportClasspathResource(directory, r, replacementPairs));
+    }
+
+    /**
+     * Export the packaged resource to the target application distribution directory.
+     */
+    private void exportClasspathResource(final String directory, final String resourceName, final ReplacementPair... replacementPairs){
+
+        assert directory != null : "Missing 'final String directory' in 'private void exportClasspathResource(final String directory, final String resourceName)'. 'directory' can be an empty string to indicate a relative root path.";
+        assert resourceName != null && !"".equals(resourceName.trim()) : "Missing 'String resource' in 'private void exportClasspathResource(String resourceName, String directory)'";
+
+        try(final InputStream stream = this.getClass().getClassLoader().getResourceAsStream(resourceName)){
 
             if(stream == null){
                 throw new WijeeException("Cannot get resource \"" + resourceName + "\" from Jar file because the input stream was null.");
             }
 
-            Path resourcePath = Paths.get(resourceName);
-            Path fileName = resourcePath.getFileName();
-            String targetFileName = fileName.toString();
-            Path directoryName = Paths.get("target", directory);
-            if(Files.notExists(directoryName)){
-                Files.createDirectory(directoryName);
+            final Path
+                directoryName = Paths.get("target", directory),
+                target = Paths.get("target\\" + directory + "\\" + resourceName);
+
+            if(notExists(directoryName)){
+                createDirectory(directoryName);
             }
-            Path target = Paths.get("target", directory, targetFileName);
-            if(Files.exists(target)){
-                Files.delete(target);
+
+            if(exists(target)){
+                delete(target);
             }
-            Files.copy(stream, target);
+            if(replacementPairs != null && replacementPairs.length > 0){
+                String answer = IOUtils.toString(stream, StandardCharsets.UTF_8);
+                for(ReplacementPair pair : replacementPairs){
+                    answer = answer.replaceAll(pair.token, pair.replacement);
+                }
+                write(target, answer.getBytes());
+            }
+            else{
+                copy(stream, target);
+            }
         }
         catch(IOException e){
 
             e.printStackTrace();
-            throw new WijeeException("Cannot get resource \"" + resourceName + "\" from Jar file. Reason: " + e.getMessage(), e);
+            throw new WijeeIOException("Cannot get resource \"" + resourceName + "\" from Jar file. Reason: " + e.getMessage(), e);
         }
     }
 
-
-
     /**
-     * Copy a file from the specified path to the target build directory that will be used
-     * package the executable.
+     * Copy a file from the specified path to the target build directory.
      */
     private void copyFile(Path source, Path destination){
 
@@ -74,33 +138,31 @@ public class WijeeWrapper{
 
         try{
 
-            File from = source.toFile();
+            final File from = source.toFile();
             if(!from.exists()){
-                throw new FileNotFoundException("Could not find the file indicated by the path '"+source.toString()+"'.");
+                throw new FileNotFoundException("Could not find the file indicated by the path '" + source.toString() + "'.");
             }
-            File to = destination.toFile();
-
+            final File to = destination.toFile();
             if(!to.exists()){
-                Files.createFile(destination);
+                createFile(destination);
             }
             if(from.isDirectory()){
-
-                Files.walk(source, FileVisitOption.FOLLOW_LINKS).forEach(
+                walk(source, FileVisitOption.FOLLOW_LINKS).forEach(
                     p -> {
                         try{
-                            Files.copy(p,
+                            copy(p,
                                 to.isDirectory() ? destination.resolve(p) : destination,
                                 REPLACE_EXISTING, COPY_ATTRIBUTES);
                         }
                         catch(IOException e){
                             e.printStackTrace();
-                            throw new WijeeException(e.getMessage(), e);
+                            throw new WijeeIOException(e.getMessage(), e);
                         }
                     }
                 );
             }
             else{
-                Files.copy(source,
+                copy(source,
                     to.isDirectory() ? destination.resolve(source) : destination,
                     REPLACE_EXISTING, COPY_ATTRIBUTES);
             }
@@ -112,90 +174,77 @@ public class WijeeWrapper{
         }
     }
 
-    public void wrap(){
+    /**
+     * Copies the install and uninstall scripts into the distribution directory.
+     */
+    private void exportScriptResources(final String directory){
 
-        exportClasspathResource(ClasspathResources.COMMONS_DAEMON_JAR, name);
-        exportClasspathResource(ClasspathResources.COMMONS_DAEMON_NATIVE_SOURCES, name);
-        exportClasspathResource(ClasspathResources.COMMONS_SERVICE_32, name);
-        exportClasspathResource(ClasspathResources.COMMONS_SERVICE_64, name + "/x64");
-        exportClasspathResource(ClasspathResources.COMMONS_SERVICE_MANAGER, name);
-        exportClasspathResource(ClasspathResources.TOMCAT_NATIVE_DLL_32, name);
-        exportClasspathResource(ClasspathResources.TOMCAT_NATIVE_DLL_64, name + "/x64");
+        assert directory != null : "'String directory' cannot be null. Empty is allowed, as it can represent a relative path (root).";
 
-        copyJar();
+        exportClasspathResources(replacementPairs, directory, INSTALL_CMD_PATH, UNINSTALL_CMD_PATH);
     }
 
-    private void copyJar(){
+    /**
+     * Copy the executable jar or war file into the target applications distribution directory.
+     */
+    private void copyArtifact(final String directory){
 
-        copyFile(Paths.get(jarPath), Paths.get(name));
+        assert directory != null : "'String directory' cannot be null. Empty is allowed, as it can represent a relative path (root).";
+
+        copyFile(
+            Paths.get(config.getArtifactPath()),
+            Paths.get(directory, directory + config.getArtifactExtension()));
     }
 
-    private void copyScripts(){
+    /**
+     * Packages the contents of the directory matching the given
+     * application name into a zip archive.     *
+     */
+    private void packageApplication(final String applicationName){
 
-    }
+        assert applicationName != null && !"".equals(applicationName.trim()) : "'String applicationName' cannot be null or empty.";
 
-    public String getJarPath(){
+        final Path directory = Paths.get(applicationName + ".zip");
+        try(final FileOutputStream fileOutputStream = new FileOutputStream(directory.toFile());
+            final ZipOutputStream zipStream = new ZipOutputStream(fileOutputStream)){
 
-        return jarPath;
-    }
-
-    public String getName(){
-
-        return name;
-    }
-
-    public static final class Builder{
-
-        private String jarPath = "";
-        private String name = "";
-
-        private Builder(){
-
+            newDirectoryStream(directory)
+                .forEach(path -> addToZipFile(path, zipStream));
         }
-
-        public Builder withJarPath(final String jarPath){
-
-            this.jarPath = jarPath == null ? "" : jarPath.trim();
-            return this;
-        }
-
-        public Builder withName(final String name){
-
-            this.name = name == null ? "" : name.trim();
-            return this;
-        }
-
-        public WijeeWrapper build(){
-
-            return new WijeeWrapper(this.jarPath, this.name);
+        catch(IOException e){
+            log.log(Level.SEVERE, "Error while zipping.", e);
+            throw new WijeeIOException(e);
         }
     }
 
-    public static WijeeWrapper build(String jarPath, String name){
+    /**
+     * Adds the file referenced by the given path to the zip archive.
+     */
+    private void addToZipFile(final Path path, final ZipOutputStream zipStream){
 
-        require(jarPath, "Missing Required Parameter 'jar-path");
-        require(name, "Missing Required Parameter 'name'");
+        assert path != null : "'final Path path' cannot be null. Method: private void addToZipFile(final Path path, final ZipOutputStream zipStream)";
+        assert zipStream != null : "'final ZipOutputStream zipStream' cannot be null. Method: private void addToZipFile(final Path path, final ZipOutputStream zipStream)";
 
-        return new WijeeWrapper(jarPath, name);
-    }
+        final File file = path.toFile();
 
-    public static Builder withJarPath(final String jarPath){
+        try(final FileInputStream inputStream = new FileInputStream(file)){
 
-        require(jarPath, "Missing Required Parameter 'jar-path");
-
-        return new Builder().withJarPath(jarPath);
-    }
-
-    public static Builder withName(final String name){
-
-        require(name, "Missing Required Parameter 'name'");
-        return new Builder().withName(name);
-    }
-
-    private static void require(String in, String message){
-
-        if(in == null || "".equalsIgnoreCase(in.trim())){
-            throw new WijeeException(message);
+            zipStream.putNextEntry(
+                new ZipEntry(file.getName())
+                    .setCreationTime(
+                        fromMillis(file.lastModified())
+                    )
+            );
+            final byte[] readBuffer = new byte[2048];
+            int amountRead = inputStream.read(readBuffer);
+            while(amountRead > 0){
+                zipStream.write(readBuffer, 0, amountRead);
+                amountRead = inputStream.read(readBuffer);
+            }
+        }
+        catch(IOException e){
+            e.printStackTrace();
+            throw new WijeeIOException("Unable to package '" + path.toString() + "'. " + e.getMessage(), e);
         }
     }
 }

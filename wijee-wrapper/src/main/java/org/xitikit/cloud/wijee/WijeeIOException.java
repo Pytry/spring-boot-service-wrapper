@@ -1,5 +1,7 @@
 package org.xitikit.cloud.wijee;
 
+import java.io.IOException;
+
 /**
  * Copyright Xitikit.org ${year}
  *
@@ -18,12 +20,12 @@ public class WijeeIOException extends WijeeException{
         super(message);
     }
 
-    public WijeeIOException(final String message, final Throwable cause){
+    public WijeeIOException(final String message, final IOException cause){
 
         super(message, cause);
     }
 
-    public WijeeIOException(final Throwable cause){
+    public WijeeIOException(final IOException cause){
 
         super(cause);
     }

@@ -3,6 +3,8 @@ package org.xitikit.cloud.wijee.test;
 import org.junit.Test;
 import org.xitikit.cloud.wijee.WijeeIOException;
 
+import java.io.IOException;
+
 /**
  * Copyright Xitikit.org ${year}
  *
@@ -27,12 +29,12 @@ public class WijeeIOExceptionTest{
     @Test(expected = WijeeIOException.class)
     public void windowsServiceWrapperMojoExceptionMessageCause() throws WijeeIOException{
 
-        throw new WijeeIOException("test", new Throwable());
+        throw new WijeeIOException("test", new IOException());
     }
 
     @Test(expected = WijeeIOException.class)
     public void windowsServiceWrapperMojoExceptionCause() throws WijeeIOException{
 
-        throw new WijeeIOException(new Throwable());
+        throw new WijeeIOException(new IOException());
     }
 }

@@ -6,7 +6,7 @@ import org.xitikit.cloud.wijee.WijeeException;
 /**
  * Copyright Xitikit.org ${year}
  *
- * OCD tests to ensures all constructors are present.
+ * Ensures all constructors are present and accept correct exception types.
  *
  * @author J. Keith "That Yoga Creep" Hoopes
  */
